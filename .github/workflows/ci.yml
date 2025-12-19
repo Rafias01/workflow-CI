@@ -23,7 +23,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install mlflow scikit-learn pandas joblib
 
-    - name: Run MLflow Project (Local Env)
+    - name: Run MLflow Project (Training)
       run: |
         mlflow run MLProject --env-manager=local
 
@@ -33,9 +33,9 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Build Docker Image with MLflow Project
+    - name: Build Docker Image from MLflow Project
       run: |
-        mlflow build-docker \
+        mlflow models build-docker \
           -n rafias01/bank-churn-dataset-mlflow \
           MLProject
 
