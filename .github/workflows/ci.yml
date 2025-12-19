@@ -38,11 +38,24 @@ jobs:
     - name: Build Docker image with MLflow
       run: |
         cd MLProject
+
         # Ambil experiment terakhir
         EXP_DIR=$(ls -d mlruns/* | sort -V | tail -n 1)
-        # Ambil run terakhir di experiment
+        if [ ! -d "$EXP_DIR" ]; then
+          echo "Tidak ada folder experiment di mlruns/"
+          exit 1
+        fi
+
+        # Ambil run terakhir
         RUN_ID=$(ls -d $EXP_DIR/* | sort -V | tail -n 1 | awk -F'/' '{print $NF}')
+        if [ -z "$RUN_ID" ]; then
+          echo "Tidak ada run_id di experiment folder"
+          exit 1
+        fi
+
         echo "Using RUN_ID=$RUN_ID"
+
+        # Build Docker image dari MLflow model
         mlflow models build-docker \
           -m runs:/$RUN_ID/model \
           -n rafias01/bank-churn-dataset-mlflow
