@@ -1,4 +1,4 @@
-name: MLflow CI Training & Docker (Advance)
+name: MLflow CI Training & Docker (Final)
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  train-and-dockerize:
+  train-and-docker:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,30 +21,21 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install mlflow scikit-learn pandas joblib docker
+        pip install mlflow pandas scikit-learn joblib
 
-    # =========================
-    # RUN MLFLOW PROJECT
-    # =========================
-    - name: Run MLflow Project
+    - name: Run MLflow Training
       run: |
-        mlflow run MLProject --env-manager=local
+        python MLProject/modelling.py
 
-    # =========================
-    # BUILD DOCKER IMAGE
-    # =========================
-    - name: Build Docker Image
-      run: |
-        docker build -t rafias01/bank-churn-dataset-mlflow:latest .
-
-    # =========================
-    # LOGIN & PUSH
-    # =========================
     - name: Login to Docker Hub
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build Docker Image
+      run: |
+        docker build -t rafias01/bank-churn-dataset-mlflow:latest .
 
     - name: Push Docker Image
       run: |
