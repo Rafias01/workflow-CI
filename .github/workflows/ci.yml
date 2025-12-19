@@ -38,8 +38,10 @@ jobs:
     - name: Build Docker image with MLflow
       run: |
         cd MLProject
-        EXP_ID=$(ls -d mlruns/* | sort -V | tail -n 1)
-        RUN_ID=$(ls -d $EXP_ID/* | sort -V | tail -n 1 | awk -F'/' '{print $NF}')
+        # Ambil experiment terakhir
+        EXP_DIR=$(ls -d mlruns/* | sort -V | tail -n 1)
+        # Ambil run terakhir di experiment
+        RUN_ID=$(ls -d $EXP_DIR/* | sort -V | tail -n 1 | awk -F'/' '{print $NF}')
         echo "Using RUN_ID=$RUN_ID"
         mlflow models build-docker \
           -m runs:/$RUN_ID/model \
