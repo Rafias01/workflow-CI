@@ -22,13 +22,10 @@ jobs:
     - name: Install dependencies
       run: pip install mlflow scikit-learn pandas joblib
 
-    - name: Run MLflow Project 
+    - name: Run MLflow Project
       run: |
         cd MLProject
-        mlflow run . \
-          --env-manager=local \
-  -       -experiment-name "CI-Training"
-
+        mlflow run . --env-manager=local --experiment-name CI-Training
 
     - name: Log in to Docker Hub
       uses: docker/login-action@v3
