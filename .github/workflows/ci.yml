@@ -37,8 +37,8 @@ jobs:
       run: |
         cd MLProject
         mlflow models build-docker \
-          -m runs:/$(ls mlruns/*/*/run_id | head -n 1)/model \
-          -n ${{ secrets.DOCKER_USERNAME }}/bank-churn-mlflow
+          -m model \
+          -n rafias01/bank-churn-dataset-mlflow
 
     - name: Push Docker image
-      run: docker push ${{ secrets.DOCKER_USERNAME }}/bank-churn-mlflow
+      run: docker push rafias01/bank-churn-dataset-mlflow
