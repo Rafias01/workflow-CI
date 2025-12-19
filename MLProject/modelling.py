@@ -14,10 +14,7 @@ DATA_PATH = os.path.join(BASE_DIR, "bank_dataset_preprocessing.csv")
 mlflow.set_tracking_uri("file:./mlruns")
 mlflow.set_experiment("Bank Churn - Baseline Model")
 
-print("MLflow local tracking aktif (file-based)")
-
-if mlflow.active_run() is not None:
-    mlflow.end_run()
+print("MLflow Project run aktif")
 
 df = pd.read_csv(DATA_PATH)
 
@@ -31,32 +28,31 @@ X_train, X_test, y_train, y_test = train_test_split(
     stratify=y
 )
 
-with mlflow.start_run(run_name="Logistic Regression - Baseline"):
 
-    model = LogisticRegression(max_iter=1000)
-    model.fit(X_train, y_train)
+model = LogisticRegression(max_iter=1000)
+model.fit(X_train, y_train)
 
-    y_pred = model.predict(X_test)
+y_pred = model.predict(X_test)
 
-    acc = accuracy_score(y_test, y_pred)
-    f1 = f1_score(y_test, y_pred)
-    cm = confusion_matrix(y_test, y_pred)
+acc = accuracy_score(y_test, y_pred)
+f1 = f1_score(y_test, y_pred)
+cm = confusion_matrix(y_test, y_pred)
 
-    mlflow.log_param("model_type", "LogisticRegression")
-    mlflow.log_metric("accuracy", acc)
-    mlflow.log_metric("f1_score", f1)
+mlflow.log_param("model_type", "LogisticRegression")
+mlflow.log_metric("accuracy", acc)
+mlflow.log_metric("f1_score", f1)
 
-    model_path = os.path.join(BASE_DIR, "logreg_model.pkl")
-    joblib.dump(model, model_path)
-    mlflow.log_artifact(model_path)
+model_path = os.path.join(BASE_DIR, "logreg_model.pkl")
+joblib.dump(model, model_path)
+mlflow.log_artifact(model_path)
 
-    cm_path = os.path.join(BASE_DIR, "confusion_matrix.txt")
-    with open(cm_path, "w") as f:
-        f.write(str(cm))
-    mlflow.log_artifact(cm_path)
+cm_path = os.path.join(BASE_DIR, "confusion_matrix.txt")
+with open(cm_path, "w") as f:
+    f.write(str(cm))
+mlflow.log_artifact(cm_path)
 
-    mlflow.sklearn.log_model(model, artifact_path="model")
+mlflow.sklearn.log_model(model, artifact_path="model")
 
-    print("✅ Training selesai")
-    print("Accuracy:", acc)
-    print("F1-score:", f1)
+print("✅ Training & logging selesai")
+print("Accuracy:", acc)
+print("F1-score:", f1)
