@@ -39,20 +39,22 @@ jobs:
       run: |
         cd MLProject
 
+        # Debug: tampilkan struktur folder mlruns
         echo "Folder mlruns:"
         ls -R mlruns/
 
         # Ambil experiment terakhir
         EXP_DIR=$(ls -d mlruns/* | sort -V | tail -n 1)
+
+        # Ambil folder hash terakhir di models
+        MODEL_HASH_DIR=$(ls -d $EXP_DIR/models/* | sort -V | tail -n 1)
+
         echo "Experiment folder: $EXP_DIR"
+        echo "Model hash folder: $MODEL_HASH_DIR"
 
-        # Ambil run terakhir
-        RUN_DIR=$(ls -d $EXP_DIR/* | sort -V | tail -n 1)
-        echo "Run folder: $RUN_DIR"
-
-        # Gunakan folder run secara langsung untuk build Docker
+        # Build Docker dengan path ke folder artifact
         mlflow models build-docker \
-          -m "$RUN_DIR/model" \
+          -m "$MODEL_HASH_DIR/artifacts" \
           -n rafias01/bank-churn-dataset-mlflow
 
     - name: Push Docker image
