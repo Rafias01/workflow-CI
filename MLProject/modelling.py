@@ -20,11 +20,7 @@ X = df.drop("Exited", axis=1)
 y = df["Exited"]
 
 X_train, X_test, y_train, y_test = train_test_split(
-    X,
-    y,
-    test_size=0.2,
-    random_state=42,
-    stratify=y
+    X, y, test_size=0.2, random_state=42, stratify=y
 )
 
 model = LogisticRegression(max_iter=1000, solver="lbfgs")
@@ -36,22 +32,20 @@ acc = accuracy_score(y_test, y_pred)
 f1 = f1_score(y_test, y_pred)
 cm = confusion_matrix(y_test, y_pred)
 
-mlflow.log_param("model_type", "LogisticRegression")
-mlflow.log_param("solver", "lbfgs")
-mlflow.log_metric("accuracy", acc)
-mlflow.log_metric("f1_score", f1)
+with mlflow.start_run(nested=True):
 
-model_path = os.path.join(BASE_DIR, "logreg_model.pkl")
-joblib.dump(model, model_path)
-mlflow.log_artifact(model_path)
+    mlflow.log_param("model_type", "LogisticRegression")
+    mlflow.log_param("solver", "lbfgs")
+    mlflow.log_metric("accuracy", acc)
+    mlflow.log_metric("f1_score", f1)
 
-cm_path = os.path.join(BASE_DIR, "confusion_matrix.txt")
-with open(cm_path, "w") as f:
-    f.write(str(cm))
-mlflow.log_artifact(cm_path)
+    model_path = os.path.join(BASE_DIR, "logreg_model.pkl")
+    joblib.dump(model, model_path)
+    mlflow.log_artifact(model_path)
 
-mlflow.sklearn.log_model(model, artifact_path="model")
+    cm_path = os.path.join(BASE_DIR, "confusion_matrix.txt")
+    with open(cm_path, "w") as f:
+        f.write(str(cm))
+    mlflow.log_artifact(cm_path)
 
-print("✅ Training dan logging berhasil")
-print(f"Accuracy: {acc:.4f}")
-print(f"F1-score: {f1:.4f}")
+    mlflow.sklearn.log_model(model, artifact_path="model")
