@@ -10,12 +10,14 @@ import joblib
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(BASE_DIR, "bank_dataset_preprocessing.csv")
-ARTIFACT_DIR = os.path.join(BASE_DIR, "mlruns")
 
 mlflow.set_tracking_uri("file:./mlruns")
 mlflow.set_experiment("Bank Churn - Baseline Model")
 
 print("MLflow local tracking aktif (file-based)")
+
+if mlflow.active_run() is not None:
+    mlflow.end_run()
 
 df = pd.read_csv(DATA_PATH)
 
