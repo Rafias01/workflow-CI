@@ -11,8 +11,8 @@ from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(BASE_DIR, "bank_dataset_preprocessing.csv")
 
+mlflow.set_tracking_uri("file://" + os.path.join(BASE_DIR, "mlruns"))
 mlflow.set_experiment("Bank Churn - Baseline Model")
-print("MLflow Project run aktif")
 
 df = pd.read_csv(DATA_PATH)
 
@@ -23,19 +23,18 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42, stratify=y
 )
 
-model = LogisticRegression(max_iter=1000, solver="lbfgs")
-model.fit(X_train, y_train)
+with mlflow.start_run():
 
-y_pred = model.predict(X_test)
+    model = LogisticRegression(max_iter=2000, solver="lbfgs")
+    model.fit(X_train, y_train)
 
-acc = accuracy_score(y_test, y_pred)
-f1 = f1_score(y_test, y_pred)
-cm = confusion_matrix(y_test, y_pred)
+    y_pred = model.predict(X_test)
 
-with mlflow.start_run(nested=True):
+    acc = accuracy_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred)
+    cm = confusion_matrix(y_test, y_pred)
 
     mlflow.log_param("model_type", "LogisticRegression")
-    mlflow.log_param("solver", "lbfgs")
     mlflow.log_metric("accuracy", acc)
     mlflow.log_metric("f1_score", f1)
 
