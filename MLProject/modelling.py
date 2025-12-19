@@ -8,6 +8,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 
+if "MLFLOW_RUN_ID" in os.environ:
+    del os.environ["MLFLOW_RUN_ID"]
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(BASE_DIR, "bank_dataset_preprocessing.csv")
 
@@ -31,7 +34,7 @@ acc = accuracy_score(y_test, y_pred)
 f1 = f1_score(y_test, y_pred)
 cm = confusion_matrix(y_test, y_pred)
 
-with mlflow.start_run(nested=True):
+with mlflow.start_run():
 
     mlflow.log_param("model_type", "LogisticRegression")
     mlflow.log_param("solver", "lbfgs")
