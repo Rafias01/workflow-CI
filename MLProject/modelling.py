@@ -8,17 +8,15 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 import joblib
 
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MLFLOW_DB = os.path.join(BASE_DIR, "mlflow.db")
+DATA_PATH = os.path.join(BASE_DIR, "bank_dataset_preprocessing.csv")
 ARTIFACT_DIR = os.path.join(BASE_DIR, "mlruns")
 
-mlflow.set_tracking_uri(f"sqlite:///{MLFLOW_DB}")
+mlflow.set_tracking_uri("file:./mlruns")
 mlflow.set_experiment("Bank Churn - Baseline Model")
 
-print("MLflow local tracking aktif")
+print("MLflow local tracking aktif (file-based)")
 
-DATA_PATH = os.path.join(BASE_DIR, "bank_dataset_preprocessing.csv")
 df = pd.read_csv(DATA_PATH)
 
 X = df.drop("Exited", axis=1)
@@ -53,11 +51,10 @@ with mlflow.start_run(run_name="Logistic Regression - Baseline"):
     cm_path = os.path.join(BASE_DIR, "confusion_matrix.txt")
     with open(cm_path, "w") as f:
         f.write(str(cm))
-
     mlflow.log_artifact(cm_path)
 
-    mlflow.sklearn.log_model(model, "model")
+    mlflow.sklearn.log_model(model, artifact_path="model")
 
-    print("✅ Training selesai (MLflow lokal)")
+    print("✅ Training selesai")
     print("Accuracy:", acc)
     print("F1-score:", f1)
