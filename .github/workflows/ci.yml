@@ -35,7 +35,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build & Push Docker Image from Latest Run
+            - name: Build & Push Docker Image from Latest Run
         working-directory: MLProject
         run: |
           if [ ! -d "mlruns" ]; then
@@ -43,24 +43,26 @@ jobs:
             exit 1
           fi
 
-          # Ambil experiment ID (biasanya 0 untuk experiment pertama)
+          # Ambil experiment ID (biasanya 0 atau 1)
           EXPERIMENT_ID=$(ls mlruns | grep -E '^[0-9]+$' | head -1)
           if [ -z "$EXPERIMENT_ID" ]; then
             echo "ERROR: Tidak menemukan experiment ID."
             exit 1
           fi
 
-          # Ambil run terbaru berdasarkan modification time folder
-          RUN_ID=$(ls -t mlruns/$EXPERIMENT_ID | head -1)
+          # Ambil RUN_ID terbaru: hanya folder dengan 32 karakter hex (UUID tanpa dash)
+          RUN_ID=$(ls -t mlruns/$EXPERIMENT_ID | grep -E '^[a-f0-9]{32}$' | head -1)
 
           if [ -z "$RUN_ID" ]; then
-            echo "ERROR: Tidak menemukan run di experiment $EXPERIMENT_ID."
+            echo "ERROR: Tidak menemukan RUN_ID valid (UUID 32 char) di experiment $EXPERIMENT_ID."
+            echo "Folder yang ditemukan:"
+            ls -la mlruns/$EXPERIMENT_ID
             exit 1
           fi
 
           echo "Experiment ID: $EXPERIMENT_ID"
           echo "Latest RUN_ID : $RUN_ID"
-          echo "Building Docker image..."
+          echo "Building Docker image dari run ini..."
 
           mlflow models build-docker \
             --model-uri "runs:/$RUN_ID/model" \
