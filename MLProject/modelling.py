@@ -1,6 +1,8 @@
 import os
 import pandas as pd
 import mlflow
+import shutil
+import sklearn
 import mlflow.sklearn
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
@@ -85,8 +87,9 @@ utc_time_created: null
 
     mlflow.log_artifacts(model_dir, artifact_path="model")
 
+    current_experiment = mlflow.get_experiment_by_name("Bank Churn - CI Workflow")
+    exp_id = current_experiment.experiment_id
     run_id = mlflow.active_run().info.run_id
-    exp_id = mlflow.get_experiment().experiment_id
     artifact_path = f"mlruns/{exp_id}/{run_id}/artifacts/model"
     os.makedirs(artifact_path, exist_ok=True)
 
