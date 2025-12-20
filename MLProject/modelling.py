@@ -11,15 +11,15 @@ tracking_uri = os.getenv("MLFLOW_TRACKING_URI")
 tracking_username = os.getenv("MLFLOW_TRACKING_USERNAME")
 tracking_password = os.getenv("MLFLOW_TRACKING_PASSWORD")
 
-if not tracking_uri:
-    raise ValueError("MLFLOW_TRACKING_URI belum diset di environment!")
-
-mlflow.set_tracking_uri(tracking_uri)
-
-if tracking_username:
-    os.environ["MLFLOW_TRACKING_USERNAME"] = tracking_username
-if tracking_password is not None:
-    os.environ["MLFLOW_TRACKING_PASSWORD"] = tracking_password
+if tracking_uri:
+    mlflow.set_tracking_uri(tracking_uri)
+    if tracking_username:
+        os.environ["MLFLOW_TRACKING_USERNAME"] = tracking_username
+    if tracking_password is not None:
+        os.environ["MLFLOW_TRACKING_PASSWORD"] = tracking_password
+else:
+    mlflow.set_tracking_uri("http://localhost:5000")
+    print("Warning: MLFLOW_TRACKING_URI tidak ditemukan. Menggunakan tracking lokal (localhost:5000).")
 
 mlflow.set_experiment("Bank Churn - CI Workflow")
 
@@ -64,4 +64,4 @@ with mlflow.start_run(run_name="Logistic Regression - CI Run"):
 
     mlflow.sklearn.log_model(model, "model")
 
-    print(f"Training selesai! Accuracy: {acc:.4f}, F1: {f1:.4f}")
+    print(f"✅ Training selesai! Accuracy: {acc:.4f}, F1: {f1:.4f}")
