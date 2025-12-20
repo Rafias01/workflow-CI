@@ -1,48 +1,59 @@
-name: MLflow CI - Training & Docker Deploy (Local Tracking)
+name: Bank Churn - CI Training & Docker Deployment
+
+permissions:
+  contents: write
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:  
 
 jobs:
   train-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      PYTHON_VERSION: "3.9"
+      MODEL_NAME: "bank-churn-logreg"
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }} 
+          fetch-depth: 
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install Dependencies
+      - name: Install required packages
         run: |
           pip install --upgrade pip
-          pip install mlflow scikit-learn pandas joblib
+          pip install mlflow[extras] scikit-learn pandas joblib cloudpickle
 
-      - name: Run Training Script (Local Tracking)
+      - name: Train model & log to MLflow (local tracking)
+        id: training
         working-directory: MLProject
         run: |
           python modelling.py
+          echo "Training selesai, mlruns dibuat"
 
-      - name: Commit and Push mlruns to Repository (Permanent Save)
+      - name: Save MLflow tracking permanently to repository
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "actions@github.com"
           
-          cd MLProject
-          git add mlruns/
+          # Tambah semua file mlruns
+          git add MLProject/mlruns || echo "mlruns sudah ada"
           
-          git diff --quiet && git diff --staged --quiet && echo "No changes in mlruns" || \
-          git commit -m "chore: update mlruns tracking from CI run $(date +'%Y-%m-%d %H:%M:%S')"
-          
-          git push origin HEAD:${{ github.ref_name }}
+          # Commit hanya jika ada perubahan
+          git status
+          if git diff-index --quiet HEAD --; then
+            echo "Tidak ada perubahan di mlruns"
+          else
+            git commit -m "ci: update MLflow tracking & artifacts (run $(date +'%Y-%m-%d %H:%M'))"
+            git push origin main
+          fi
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -50,26 +61,24 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build & Push Docker Image from Local Model Artifact
+      - name: Build and push Docker image from local model artifact
         working-directory: MLProject
         run: |
-          if [ ! -d "model" ]; then
-            echo "ERROR: Folder 'model' tidak ditemukan."
-            ls -la
-            exit 1
-          fi
-          if [ ! -f "model/MLmodel" ]; then
-            echo "ERROR: File MLmodel tidak ditemukan."
-            ls -la model
-            exit 1
-          fi
-          echo "Building Docker image..."
+          # Validasi artifact model
+          [ -d "model" ] && [ -f "model/MLmodel" ] || exit 1
+          
+          echo "Membangun Docker image..."
           mlflow models build-docker \
             --model-uri "./model" \
-            --name "${{ secrets.DOCKER_USERNAME }}/bank-churn-model:latest"
-          docker push ${{ secrets.DOCKER_USERNAME }}/bank-churn-model:latest
-          echo "Docker image berhasil di-push!"
+            --name "${{ secrets.DOCKER_USERNAME }}/${{ env.MODEL_NAME }}:latest"
+          
+          echo "Push ke Docker Hub..."
+          docker push ${{ secrets.DOCKER_USERNAME }}/${{ env.MODEL_NAME }}:latest
+          
+          echo "Docker image sukses: https://hub.docker.com/r/${{ secrets.DOCKER_USERNAME }}/${{ env.MODEL_NAME }}"
 
-      - name: Workflow Complete
+      - name: Summary
         run: |
-          echo "Pipeline selesai!"
+          echo "Pipeline CI/CD selesai!"
+          echo "Model dilatih & di-log ke mlruns"
+          echo "Docker image di-push ke Docker Hub"
