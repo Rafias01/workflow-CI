@@ -14,7 +14,10 @@ mlflow.set_experiment("Bank Churn - CI Workflow")
 
 os.makedirs("mlruns", exist_ok=True)
 
+mlflow.sklearn.autolog(log_models=True, log_datasets=False)
+
 print("MLflow tracking lokal aktif: mlruns/")
+print("mlflow.sklearn.autolog() telah diaktifkan")
 print("Experiment: Bank Churn - CI Workflow")
 print("Training dimulai...\n")
 
@@ -43,16 +46,9 @@ with mlflow.start_run(run_name="Logistic Regression - Baseline CI"):
     f1 = f1_score(y_test, y_pred)
     cm = confusion_matrix(y_test, y_pred)
 
-    # Logging params & metrics
-    mlflow.log_param("model_type", "LogisticRegression")
-    mlflow.log_param("max_iter", 1000)
-    mlflow.log_param("test_size", 0.2)
-    mlflow.log_param("random_state", 42)
+    mlflow.log_metric("test_accuracy", acc)
+    mlflow.log_metric("test_f1_score", f1)
 
-    mlflow.log_metric("accuracy", acc)
-    mlflow.log_metric("f1_score", f1)
-
-    # Artifact tambahan
     joblib.dump(model, "logreg_model.pkl")
     mlflow.log_artifact("logreg_model.pkl")
 
@@ -98,11 +94,10 @@ utc_time_created: null
         shutil.copy(conda_src, conda_dst)
         print("conda.yaml berhasil disalin ke folder model untuk Docker build")
     else:
-        raise FileNotFoundError("File conda.yaml tidak ditemukan di folder MLProject! Harus ada untuk Docker build.")
+        raise FileNotFoundError("File conda.yaml tidak ditemukan! Harus ada di folder MLProject untuk Docker build.")
 
-    # Log folder model sebagai artifact
     mlflow.log_artifacts(model_dir, artifact_path="model")
 
     print("Training & logging selesai!")
-    print(f"   Accuracy : {acc:.4f}")
-    print(f"   F1-Score : {f1:.4f}")
+    print(f"   Test Accuracy : {acc:.4f}")
+    print(f"   Test F1-Score : {f1:.4f}")
