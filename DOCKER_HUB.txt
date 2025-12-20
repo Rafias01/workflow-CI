@@ -1,1 +1,1 @@
-https://hub.docker.com/repository/docker/rafias01/bank-churn-model/general
+https://hub.docker.com/repository/docker/rafias01/bank-churn-logreg/general
