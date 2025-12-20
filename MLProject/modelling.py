@@ -7,12 +7,13 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 import joblib
 
-mlflow.set_tracking_uri("sqlite:///mlflow.db")
+mlflow.set_tracking_uri("file://./mlruns")
+
 mlflow.set_experiment("Bank Churn - CI Workflow")
 
 os.makedirs("mlruns", exist_ok=True)
 
-print("MLflow tracking lokal aktif (sqlite:///mlflow.db)")
+print("MLflow tracking lokal aktif (file store: ./mlruns)")
 print("Experiment: Bank Churn - CI Workflow")
 print("Training dimulai...\n")
 
@@ -67,7 +68,7 @@ with mlflow.start_run(run_name="Logistic Regression - Baseline CI"):
 
     mlflow.sklearn.log_model(model, "model")
 
-    print("Training selesai!")
+    print("Training & logging selesai!")
     print(f"   Accuracy : {acc:.4f}")
     print(f"   F1-Score : {f1:.4f}")
     print(f"   Run ID   : {mlflow.active_run().info.run_id}")
