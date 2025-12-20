@@ -69,12 +69,13 @@ with mlflow.start_run(run_name="Logistic Regression - Baseline CI"):
     os.makedirs(model_dir, exist_ok=True)
     joblib.dump(model, os.path.join(model_dir, "model.pkl"))
 
-    mlmodel_content = """
+    import sklearn
+    mlmodel_content = f"""
 artifact_path: model
 flavors:
   sklearn:
     pickled_model: model.pkl
-    sklearn_version: 1.3.2
+    sklearn_version: {sklearn.__version__}
     serialization_format: cloudpickle
 run_id: null
 utc_time_created: null
@@ -83,6 +84,15 @@ utc_time_created: null
         f.write(mlmodel_content.strip())
 
     mlflow.log_artifacts(model_dir, artifact_path="model")
+
+    run_id = mlflow.active_run().info.run_id
+    exp_id = mlflow.get_experiment().experiment_id
+    artifact_path = f"mlruns/{exp_id}/{run_id}/artifacts/model"
+    os.makedirs(artifact_path, exist_ok=True)
+
+    import shutil
+    for file_name in os.listdir(model_dir):
+        shutil.copy(os.path.join(model_dir, file_name), os.path.join(artifact_path, file_name))
 
     print("Training & logging selesai!")
     print(f"   Accuracy : {acc:.4f}")
