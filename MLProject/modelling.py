@@ -9,14 +9,18 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 import joblib
 
-mlflow.set_tracking_uri("./mlruns")
+mlruns_abs_path = os.path.abspath("mlruns")
+
+mlflow.set_tracking_uri(f"file://{mlruns_abs_path}")
+
 mlflow.set_experiment("Bank Churn - CI Workflow")
 
-os.makedirs("./mlruns", exist_ok=True)
+os.makedirs(mlruns_abs_path, exist_ok=True)
 
-print("MLflow tracking lokal aktif: ./mlruns")
+print(f"MLflow tracking lokal aktif: {mlruns_abs_path}")
 print("Experiment: Bank Churn - CI Workflow")
 print("Training dimulai...\n")
+
 DATA_PATH = "bank_dataset_preprocessing.csv"
 
 if not os.path.exists(DATA_PATH):
