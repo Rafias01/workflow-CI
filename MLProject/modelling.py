@@ -9,18 +9,14 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 import joblib
 
-mlflow.set_tracking_uri("mlruns")
+mlflow.set_tracking_uri("./mlruns")
 mlflow.set_experiment("Bank Churn - CI Workflow")
 
-os.makedirs("mlruns", exist_ok=True)
+os.makedirs("./mlruns", exist_ok=True)
 
-mlflow.sklearn.autolog(log_models=True, log_datasets=False)
-
-print("MLflow tracking lokal aktif: mlruns/")
-print("mlflow.sklearn.autolog() telah diaktifkan")
+print("MLflow tracking lokal aktif: ./mlruns")
 print("Experiment: Bank Churn - CI Workflow")
 print("Training dimulai...\n")
-
 DATA_PATH = "bank_dataset_preprocessing.csv"
 
 if not os.path.exists(DATA_PATH):
