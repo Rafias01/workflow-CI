@@ -1,0 +1,13 @@
+Feature Coefficients:
+
+CreditScore: -0.002691
+Gender: -0.511001
+Age: 0.061843
+Tenure: -0.015731
+Balance: 0.000001
+NumOfProducts: -0.327442
+HasCrCard: -0.201843
+IsActiveMember: -1.055398
+EstimatedSalary: 0.000000
+Geography_Germany: 1.041111
+Geography_Spain: 0.211476
