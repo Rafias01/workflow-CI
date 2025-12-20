@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }} 
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -29,6 +31,19 @@ jobs:
         run: |
           python modelling.py
 
+      - name: Commit and Push mlruns to Repository (Permanent Save)
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          cd MLProject
+          git add mlruns/
+          
+          git diff --quiet && git diff --staged --quiet && echo "No changes in mlruns" || \
+          git commit -m "chore: update mlruns tracking from CI run $(date +'%Y-%m-%d %H:%M:%S')"
+          
+          git push origin HEAD:${{ github.ref_name }}
+
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -38,34 +53,23 @@ jobs:
       - name: Build & Push Docker Image from Local Model Artifact
         working-directory: MLProject
         run: |
-          # Pastikan folder model ada (dibuat oleh modelling.py)
           if [ ! -d "model" ]; then
-            echo "ERROR: Folder 'model' tidak ditemukan. Training gagal membuat artifact model."
+            echo "ERROR: Folder 'model' tidak ditemukan."
             ls -la
             exit 1
           fi
-
-          # Pastikan file MLmodel ada
           if [ ! -f "model/MLmodel" ]; then
-            echo "ERROR: File MLmodel tidak ditemukan di folder model."
+            echo "ERROR: File MLmodel tidak ditemukan."
             ls -la model
             exit 1
           fi
-
-          echo "Model artifact lokal ditemukan di folder 'model'"
-          echo "Building Docker image dari artifact lokal..."
-
-          # Build Docker langsung dari folder model lokal
+          echo "Building Docker image..."
           mlflow models build-docker \
             --model-uri "./model" \
             --name "${{ secrets.DOCKER_USERNAME }}/bank-churn-model:latest"
-
           docker push ${{ secrets.DOCKER_USERNAME }}/bank-churn-model:latest
-
-          echo "Docker image berhasil di-build dan di-push!"
-          echo "Link: https://hub.docker.com/r/${{ secrets.DOCKER_USERNAME }}/bank-churn-model"
+          echo "Docker image berhasil di-push!"
 
       - name: Workflow Complete
         run: |
           echo "Pipeline selesai!"
-          echo "Model dilatih, artifact di-log lokal, Docker image di-deploy ke Docker Hub."
