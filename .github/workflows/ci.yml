@@ -1,4 +1,4 @@
-name: MLflow CI - Training & Docker Deploy
+name: MLflow CI - Training & Docker Deploy (Local Tracking)
 
 on:
   push:
@@ -24,19 +24,7 @@ jobs:
           pip install --upgrade pip
           pip install mlflow scikit-learn pandas joblib
 
-      - name: Configure MLflow Tracking
-        env:
-          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
-          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
-          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
-        run: |
-          echo "MLflow tracking configured."
-
-      - name: Run Training Script Directly
-        env:
-          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
-          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
-          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+      - name: Run Training Script (Local Tracking)
         working-directory: MLProject
         run: |
           python modelling.py
@@ -48,18 +36,16 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build & Push Docker Image from Latest Run
-        env:
-          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
-          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
-          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+        working-directory: MLProject
         run: |
+          # Install jq untuk parsing
           sudo apt-get update && sudo apt-get install -y jq
 
           EXPERIMENT_NAME="Bank Churn - CI Workflow"
           RUN_ID=$(mlflow runs list --experiment-name "$EXPERIMENT_NAME" --max-results 1 --output json | jq -r '.[0].info.run_id')
 
           if [ -z "$RUN_ID" ] || [ "$RUN_ID" = "null" ]; then
-            echo "ERROR: Tidak menemukan run terbaru. Pastikan training berhasil."
+            echo "ERROR: Tidak menemukan run terbaru."
             exit 1
           fi
 
@@ -76,4 +62,5 @@ jobs:
 
       - name: Workflow Complete
         run: |
-          echo "CI/CD Pipeline selesai sukses! Model dilatih, logged ke DagsHub, dan Docker di-deploy."
+          echo "Pipeline selesai!"
+          echo "Model dilatih, artifact di-log lokal, Docker image di-deploy ke Docker Hub."

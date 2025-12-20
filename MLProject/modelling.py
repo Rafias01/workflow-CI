@@ -7,27 +7,20 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 import joblib
 
-tracking_uri = os.getenv("MLFLOW_TRACKING_URI")
-tracking_username = os.getenv("MLFLOW_TRACKING_USERNAME")
-tracking_password = os.getenv("MLFLOW_TRACKING_PASSWORD")
-
-if not tracking_uri:
-    raise ValueError("MLFLOW_TRACKING_URI tidak ditemukan! Pastikan sudah diset di GitHub Secrets.")
-if not tracking_username:
-    raise ValueError("MLFLOW_TRACKING_USERNAME tidak ditemukan! Pastikan token DagsHub sudah diset di Secrets.")
-
-mlflow.set_tracking_uri(tracking_uri)
-
-os.environ["MLFLOW_TRACKING_USERNAME"] = tracking_username
-os.environ["MLFLOW_TRACKING_PASSWORD"] = tracking_password or ""  # Kosong jika None
-
+mlflow.set_tracking_uri("sqlite:///mlflow.db")
 mlflow.set_experiment("Bank Churn - CI Workflow")
 
-print(f"MLflow tracking aktif: {tracking_uri}")
+os.makedirs("mlruns", exist_ok=True)
+
+print("MLflow tracking lokal aktif (sqlite:///mlflow.db)")
 print("Experiment: Bank Churn - CI Workflow")
 print("Training dimulai...\n")
 
 DATA_PATH = "bank_dataset_preprocessing.csv"
+
+if not os.path.exists(DATA_PATH):
+    raise FileNotFoundError(f"Dataset tidak ditemukan: {DATA_PATH}")
+
 df = pd.read_csv(DATA_PATH)
 
 X = df.drop("Exited", axis=1)
@@ -52,35 +45,29 @@ with mlflow.start_run(run_name="Logistic Regression - Baseline CI"):
     mlflow.log_param("max_iter", 1000)
     mlflow.log_param("test_size", 0.2)
     mlflow.log_param("random_state", 42)
-    mlflow.log_param("stratify", True)
 
     mlflow.log_metric("accuracy", acc)
     mlflow.log_metric("f1_score", f1)
 
-    model_path = "logreg_model.pkl"
-    joblib.dump(model, model_path)
-    mlflow.log_artifact(model_path)
+    joblib.dump(model, "logreg_model.pkl")
+    mlflow.log_artifact("logreg_model.pkl")
 
-    cm_path = "confusion_matrix.txt"
-    with open(cm_path, "w") as f:
+    with open("confusion_matrix.txt", "w") as f:
         f.write(str(cm))
-    mlflow.log_artifact(cm_path)
+    mlflow.log_artifact("confusion_matrix.txt")
 
-    summary_path = "dataset_summary.csv"
-    df.describe().to_csv(summary_path)
-    mlflow.log_artifact(summary_path)
+    df.describe().to_csv("dataset_summary.csv")
+    mlflow.log_artifact("dataset_summary.csv")
 
-    coef_path = "feature_coefficients.txt"
-    with open(coef_path, "w") as f:
-        f.write("Feature Coefficients (Logistic Regression):\n\n")
-        for feature, coef in zip(X.columns, model.coef_[0]):
-            f.write(f"{feature}: {coef:.6f}\n")
-    mlflow.log_artifact(coef_path)
+    with open("feature_coefficients.txt", "w") as f:
+        f.write("Feature Coefficients:\n\n")
+        for feat, coef in zip(X.columns, model.coef_[0]):
+            f.write(f"{feat}: {coef:.6f}\n")
+    mlflow.log_artifact("feature_coefficients.txt")
 
     mlflow.sklearn.log_model(model, "model")
 
-    print("Training & logging selesai!")
+    print("Training selesai!")
     print(f"   Accuracy : {acc:.4f}")
     print(f"   F1-Score : {f1:.4f}")
     print(f"   Run ID   : {mlflow.active_run().info.run_id}")
-    print(f"   Semua artifact telah di-log ke DagsHub.")
