@@ -1,4 +1,4 @@
-name: bank-churn-ci
+name: BankChurnCI
 
 conda_env: conda.yaml
 
