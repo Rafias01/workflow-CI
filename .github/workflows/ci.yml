@@ -19,10 +19,10 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install dependencies
+      - name: Install Latest MLflow and Dependencies
         run: |
           pip install --upgrade pip
-          pip install mlflow>=2.0 scikit-learn pandas joblib jq
+          pip install "mlflow>=2.16.0" scikit-learn pandas joblib
 
       - name: Configure MLflow Tracking (DagsHub)
         env:
@@ -30,17 +30,16 @@ jobs:
           MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
           MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
         run: |
-          echo "MLflow tracking URI: $MLFLOW_TRACKING_URI"
-          echo "Tracking configured successfully."
+          echo "MLflow tracking configured to: $MLFLOW_TRACKING_URI"
 
-      - name: Run MLflow Project (Training & Logging to DagsHub)
+      - name: Run MLflow Project (Without Conda)
         env:
           MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
           MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
           MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
         working-directory: MLProject
         run: |
-          mlflow run .
+          mlflow run . --no-conda
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -54,36 +53,28 @@ jobs:
           MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
           MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
         run: |
-          # Install jq jika belum (untuk parsing JSON)
+          # Install jq untuk parsing
           sudo apt-get update && sudo apt-get install -y jq
 
-          # Nama experiment sesuai yang ada di modelling.py
           EXPERIMENT_NAME="Bank Churn - CI Workflow"
-
-          # Ambil RUN_ID terbaru dari experiment
           RUN_ID=$(mlflow runs list --experiment-name "$EXPERIMENT_NAME" --max-results 1 --output json | jq -r '.[0].info.run_id')
 
           if [ -z "$RUN_ID" ] || [ "$RUN_ID" = "null" ]; then
-            echo "ERROR: Tidak dapat menemukan RUN_ID terbaru dari experiment '$EXPERIMENT_NAME'"
-            echo "Pastikan training berhasil dan experiment name sama persis."
+            echo "ERROR: Tidak menemukan run terbaru. Pastikan training berhasil."
             exit 1
           fi
 
-          echo "Latest RUN_ID: $RUN_ID"
-          echo "Building Docker image dari model di run ini..."
+          echo "Building Docker dari RUN_ID: $RUN_ID"
 
-          # Build Docker image
           mlflow models build-docker \
             --model-uri "runs:/$RUN_ID/model" \
             --name "${{ secrets.DOCKER_USERNAME }}/bank-churn-model:latest"
 
-          # Push ke Docker Hub
           docker push ${{ secrets.DOCKER_USERNAME }}/bank-churn-model:latest
 
-          echo "Docker image berhasil di-build dan di-push!"
+          echo "Docker image berhasil di-push ke Docker Hub!"
           echo "Link: https://hub.docker.com/r/${{ secrets.DOCKER_USERNAME }}/bank-churn-model"
 
       - name: Workflow Complete
         run: |
-          echo "CI/CD Pipeline selesai dengan sukses!"
-          echo "Model telah dilatih, di-log ke DagsHub, dan Docker image telah di-deploy."
+          echo "Pipeline CI/CD selesai dengan sukses!"
