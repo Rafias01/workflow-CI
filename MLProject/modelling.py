@@ -65,9 +65,25 @@ with mlflow.start_run(run_name="Logistic Regression - Baseline CI"):
             f.write(f"{feat}: {coef:.6f}\n")
     mlflow.log_artifact("feature_coefficients.txt")
 
-    mlflow.sklearn.log_model(model, "model")
+    model_dir = "model"
+    os.makedirs(model_dir, exist_ok=True)
+    joblib.dump(model, os.path.join(model_dir, "model.pkl"))
+
+    mlmodel_content = """
+artifact_path: model
+flavors:
+  sklearn:
+    pickled_model: model.pkl
+    sklearn_version: 1.3.2
+    serialization_format: cloudpickle
+run_id: null
+utc_time_created: null
+"""
+    with open(os.path.join(model_dir, "MLmodel"), "w") as f:
+        f.write(mlmodel_content.strip())
+
+    mlflow.log_artifacts(model_dir, artifact_path="model")
 
     print("Training & logging selesai!")
     print(f"   Accuracy : {acc:.4f}")
     print(f"   F1-Score : {f1:.4f}")
-    print(f"   Run ID   : {mlflow.active_run().info.run_id}")
