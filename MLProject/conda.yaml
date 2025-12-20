@@ -1,13 +1,12 @@
 name: bank-churn-env
 channels:
   - defaults
-  - conda-forge
 dependencies:
   - python=3.9
   - pip
-  - numpy
-  - pandas
-  - scikit-learn
-  - joblib
   - pip:
-      - mlflow>=2.0
+      - mlflow
+      - scikit-learn
+      - pandas
+      - joblib
+      - cloudpickle

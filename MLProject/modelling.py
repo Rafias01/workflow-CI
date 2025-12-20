@@ -1,9 +1,9 @@
 import os
 import pandas as pd
 import mlflow
-import shutil
-import sklearn
 import mlflow.sklearn
+import sklearn
+import shutil
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
@@ -71,31 +71,25 @@ with mlflow.start_run(run_name="Logistic Regression - Baseline CI"):
     os.makedirs(model_dir, exist_ok=True)
     joblib.dump(model, os.path.join(model_dir, "model.pkl"))
 
-    import sklearn
-    mlmodel_content = f"""
-artifact_path: model
+    mlmodel_content = f"""artifact_path: model
 flavors:
   sklearn:
     pickled_model: model.pkl
     sklearn_version: {sklearn.__version__}
     serialization_format: cloudpickle
+  python_function:
+    loader_module: mlflow.sklearn
+    python_version: 3.9
+    env: conda.yaml
 run_id: null
 utc_time_created: null
 """
+
     with open(os.path.join(model_dir, "MLmodel"), "w") as f:
         f.write(mlmodel_content.strip())
 
+    # Log artifact model
     mlflow.log_artifacts(model_dir, artifact_path="model")
-
-    current_experiment = mlflow.get_experiment_by_name("Bank Churn - CI Workflow")
-    exp_id = current_experiment.experiment_id
-    run_id = mlflow.active_run().info.run_id
-    artifact_path = f"mlruns/{exp_id}/{run_id}/artifacts/model"
-    os.makedirs(artifact_path, exist_ok=True)
-
-    import shutil
-    for file_name in os.listdir(model_dir):
-        shutil.copy(os.path.join(model_dir, file_name), os.path.join(artifact_path, file_name))
 
     print("Training & logging selesai!")
     print(f"   Accuracy : {acc:.4f}")
