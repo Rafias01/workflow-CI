@@ -1,0 +1,14 @@
+artifact_uri: file:///home/runner/work/workflow-CI/workflow-CI/MLProject/mlruns/0/669a3df2525c46169c33e42c6ddca8cf/artifacts
+end_time: 1766339867619
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 669a3df2525c46169c33e42c6ddca8cf
+run_name: kindly-perch-151
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1766339863725
+status: 3
+tags: []
+user_id: runner
