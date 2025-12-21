@@ -31,9 +31,9 @@ jobs:
       - name: Train model & log ke MLflow
         working-directory: MLProject
         run: |
-          python modelling.py
+          mlflow run .   # Menggunakan mlflow run sesuai kriteria
           echo "Pelatihan selesai!"
-          echo "Folder mlruns telah dibuat di: $(pwd)/mlruns"
+          echo "Folder mlruns telah dibuat di root repo (di luar folder MLProject)"
 
       - name: Commit dan push folder mlruns ke repo
         run: |
@@ -43,8 +43,8 @@ jobs:
           # Ambil perubahan terbaru dari remote (hindari konflik)
           git pull origin main --rebase
 
-          # Tambahkan folder mlruns (dan file lain yang dihasilkan jika ada)
-          git add MLProject/mlruns || echo "Tidak ada perubahan di mlruns"
+          # Tambahkan folder mlruns yang berada di root repo
+          git add mlruns || echo "Tidak ada perubahan di mlruns"
 
           # Commit hanya jika ada perubahan
           if git diff-index --quiet HEAD --; then
@@ -59,8 +59,8 @@ jobs:
         run: |
           echo "========================================"
           echo "PIPELINE CI BERHASIL SELESAI!"
-          echo "✓ Model berhasil dilatih"
+          echo "✓ Model berhasil dilatih menggunakan mlflow run"
           echo "✓ Metrics & model di-log ke MLflow"
           echo "✓ Folder mlruns (lengkap dengan model di dalamnya) telah di-commit ke repo"
-          echo "   → Bisa dilihat langsung di: https://github.com/Rafias01/workflow-CI/tree/main/MLProject/mlruns"
+          echo "   → Bisa dilihat langsung di: https://github.com/Rafias01/workflow-CI/tree/main/mlruns"
           echo "========================================"
