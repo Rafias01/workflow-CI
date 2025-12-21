@@ -5,8 +5,8 @@ import mlflow.sklearn
 import sklearn
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
-import joblib
+from sklearn.metrics import accuracy_score, f1_score
+import joblib  
 
 mlflow.set_experiment("Bank Churn - CI Workflow")
 
@@ -17,7 +17,7 @@ print("Training dimulai...\n")
 DATA_PATH = "bank_dataset_preprocessing.csv"
 
 if not os.path.exists(DATA_PATH):
-    raise FileNotFoundError(f"Dataset tidak bisa ditemukan: {DATA_PATH}")
+    raise FileNotFoundError(f"Dataset tidak ditemukan: {DATA_PATH}")
 
 df = pd.read_csv(DATA_PATH)
 
@@ -45,6 +45,10 @@ with mlflow.start_run(run_name="Logistic Regression - Baseline CI"):
         sk_model=model,
         artifact_path="model"
     )
+
+    pkl_path = "logreg_model.pkl"
+    joblib.dump(model, pkl_path)
+    print(f"logreg_model.pkl berhasil dibuat di: {os.path.abspath(pkl_path)}")
 
     print("\nMODEL BERHASIL DI-LOG KE MLFLOW!")
     print(f"Test Accuracy : {acc:.4f}")
