@@ -29,19 +29,6 @@ jobs:
           pip install --upgrade pip
           pip install mlflow[extras] scikit-learn pandas joblib cloudpickle
 
-<<<<<<< HEAD
-      - name: Train dengan MLflow Project
-        working-directory: MLProject
-        run: |
-          mlflow run .   # atau tambah -P untuk parameters
-          echo "Retraining otomatis selesai!"
-
-      - name: Upload mlruns sebagai artifact (untuk review)
-        uses: actions/upload-artifact@v4
-        with:
-          name: mlruns-latest
-          path: MLProject/mlruns
-=======
       - name: Train model menggunakan MLflow Projects
         working-directory: MLProject
         run: |
@@ -70,21 +57,13 @@ jobs:
             git push origin main
             echo "Folder mlruns berhasil di-commit dan di-push ke repo!"
           fi
->>>>>>> a65910a (perubahan kode2)
 
       - name: Summary
         run: |
           echo "========================================"
-<<<<<<< HEAD
-          echo "PIPELINE CI BERHASIL!"
-          echo "✓ Retraining otomatis dengan mlflow run"
-          echo "✓ Artefak model ada di mlruns (download dari Actions artifacts)"
-          echo "========================================"
-=======
           echo "PIPELINE CI BERHASIL SELESAI!"
           echo "✓ Model dilatih menggunakan 'mlflow run'"
           echo "✓ Metrics, parameters, & model artifact di-log ke MLflow"
           echo "✓ Folder mlruns telah di-update dan di-commit ke repo"
           echo "   → Lihat di: https://github.com/Rafias01/workflow-CI/tree/main/MLProject/mlruns"
           echo "========================================"
->>>>>>> a65910a (perubahan kode2)
