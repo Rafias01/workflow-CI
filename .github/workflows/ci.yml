@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -27,6 +29,7 @@ jobs:
           pip install --upgrade pip
           pip install mlflow[extras] scikit-learn pandas joblib cloudpickle
 
+<<<<<<< HEAD
       - name: Train dengan MLflow Project
         working-directory: MLProject
         run: |
@@ -38,11 +41,50 @@ jobs:
         with:
           name: mlruns-latest
           path: MLProject/mlruns
+=======
+      - name: Train model menggunakan MLflow Projects
+        working-directory: MLProject
+        run: |
+          # Gunakan mlflow run dengan --no-conda agar tidak error di GitHub Actions
+          mlflow run . --no-conda
+          
+          echo "Pelatihan selesai!"
+          echo "Folder mlruns telah dibuat di: $(pwd)/mlruns"
+
+      - name: Commit dan push folder mlruns ke repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Ambil update terbaru dari remote untuk hindari konflik
+          git pull origin main --rebase
+
+          # Tambahkan folder mlruns
+          git add MLProject/mlruns || echo "Tidak ada perubahan di mlruns"
+
+          # Commit hanya jika ada perubahan baru
+          if git diff-index --quiet HEAD --; then
+            echo "Tidak ada perubahan baru di mlruns untuk di-commit"
+          else
+            git commit -m "ci: update mlruns after training (run: ${{ github.run_number }})"
+            git push origin main
+            echo "Folder mlruns berhasil di-commit dan di-push ke repo!"
+          fi
+>>>>>>> a65910a (perubahan kode2)
 
       - name: Summary
         run: |
           echo "========================================"
+<<<<<<< HEAD
           echo "PIPELINE CI BERHASIL!"
           echo "✓ Retraining otomatis dengan mlflow run"
           echo "✓ Artefak model ada di mlruns (download dari Actions artifacts)"
           echo "========================================"
+=======
+          echo "PIPELINE CI BERHASIL SELESAI!"
+          echo "✓ Model dilatih menggunakan 'mlflow run'"
+          echo "✓ Metrics, parameters, & model artifact di-log ke MLflow"
+          echo "✓ Folder mlruns telah di-update dan di-commit ke repo"
+          echo "   → Lihat di: https://github.com/Rafias01/workflow-CI/tree/main/MLProject/mlruns"
+          echo "========================================"
+>>>>>>> a65910a (perubahan kode2)
