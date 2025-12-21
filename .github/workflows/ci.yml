@@ -11,8 +11,6 @@ on:
 jobs:
   train:
     runs-on: ubuntu-latest
-    env:
-      PYTHON_VERSION: "3.9"
 
     steps:
       - name: Checkout code
@@ -20,21 +18,19 @@ jobs:
         with:
           fetch-depth: 0  
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - name: Setup Miniconda
+        uses: conda-incubator/setup-miniconda@v3
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: "3.9"
+          miniconda-version: "latest"
+          activate-environment: mlflow-env
+          auto-activate-base: false
 
-      - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          pip install mlflow[extras] scikit-learn pandas joblib cloudpickle
-
-      - name: Train model menggunakan MLflow Projects
+      - name: Train model menggunakan MLflow Projects (otomatis pakai conda.yaml)
         working-directory: MLProject
+        shell: bash -l {0}  
         run: |
-          # Gunakan env-manager=local untuk jalankan di environment saat ini (tanpa Conda)
-          mlflow run . --env-manager=local
+          mlflow run .
           
           echo "Pelatihan selesai!"
           echo "Folder mlruns telah dibuat di: $(pwd)/mlruns"
@@ -42,15 +38,9 @@ jobs:
       - name: Commit dan push folder mlruns ke repo
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "41898242+github-actions[bot]@users.noreply.github.com"
-
-          # Ambil update terbaru dari remote untuk hindari konflik
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git pull origin main --rebase
-
-          # Tambahkan folder mlruns
           git add MLProject/mlruns || echo "Tidak ada perubahan di mlruns"
-
-          # Commit hanya jika ada perubahan baru
           if git diff-index --quiet HEAD --; then
             echo "Tidak ada perubahan baru di mlruns untuk di-commit"
           else
@@ -63,7 +53,7 @@ jobs:
         run: |
           echo "========================================"
           echo "PIPELINE CI BERHASIL SELESAI!"
-          echo "✓ Model dilatih menggunakan 'mlflow run'"
+          echo "✓ Model dilatih menggunakan 'mlflow run' (otomatis pakai conda.yaml)"
           echo "✓ Metrics, parameters, & model artifact di-log ke MLflow"
           echo "✓ Folder mlruns telah di-update dan di-commit ke repo"
           echo "   → Lihat di: https://github.com/Rafias01/workflow-CI/tree/main/MLProject/mlruns"
