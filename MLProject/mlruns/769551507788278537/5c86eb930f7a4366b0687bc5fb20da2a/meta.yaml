@@ -1,0 +1,14 @@
+artifact_uri: file:///home/runner/work/workflow-CI/workflow-CI/MLProject/mlruns/769551507788278537/5c86eb930f7a4366b0687bc5fb20da2a/artifacts
+end_time: 1766337399608
+entry_point_name: ''
+experiment_id: '769551507788278537'
+lifecycle_stage: active
+run_id: 5c86eb930f7a4366b0687bc5fb20da2a
+run_name: Logistic Regression - Baseline CI
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1766337396958
+status: 3
+tags: []
+user_id: runner
