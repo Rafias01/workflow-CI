@@ -12,7 +12,7 @@ mlflow.set_experiment("Bank Churn - CI Workflow")
 
 print("MLflow tracking lokal aktif (default: ./mlruns)")
 print("Experiment: Bank Churn - CI Workflow")
-print("Training dimulai...\n")
+print("Training dimulai..\n")
 
 DATA_PATH = "bank_dataset_preprocessing.csv"
 
