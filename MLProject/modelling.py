@@ -17,7 +17,7 @@ print("Training dimulai...\n")
 DATA_PATH = "bank_dataset_preprocessing.csv"
 
 if not os.path.exists(DATA_PATH):
-    raise FileNotFoundError(f"Dataset tidak ditemukan: {DATA_PATH}")
+    raise FileNotFoundError(f"Dataset tidak bisa ditemukan: {DATA_PATH}")
 
 df = pd.read_csv(DATA_PATH)
 
