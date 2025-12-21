@@ -69,30 +69,38 @@ jobs:
       - name: Build & push Docker image
         working-directory: MLProject
         run: |
-          # Validasi artifact model dari MLflow
-          if [ ! -d "model" ] || [ ! -f "model/MLmodel" ]; then
-            echo "Error: Folder model/ atau MLmodel tidak ditemukan!"
+          echo "Mencari run MLflow terbaru untuk experiment 'Bank Churn - CI Workflow'..."
+
+          # Dapatkan run_id terbaru dari experiment
+          LATEST_RUN_ID=$(mlflow runs list \
+            --experiment-name "Bank Churn - CI Workflow" \
+            --order-by "start_time DESC" \
+            --max-results 1 \
+            --output-format json | jq -r '.[0].run_id')
+
+          if [ -z "$LATEST_RUN_ID" ]; then
+            echo "Error: Tidak ada run MLflow yang ditemukan!"
             exit 1
           fi
 
-          echo "Membangun Docker image dengan tag ${{ env.IMAGE_TAG }} dan latest..."
+          echo "Run terbaru ditemukan: $LATEST_RUN_ID"
+          echo "Membangun Docker image dari run tersebut..."
 
-          # Build image dengan tag SHA
+          # Build Docker langsung dari run MLflow (tanpa perlu folder model sementara)
           mlflow models build-docker \
-            --model-uri "./model" \
+            --model-uri "runs:/$LATEST_RUN_ID/model" \
             --name "${{ secrets.DOCKER_USERNAME }}/${{ env.MODEL_NAME }}:${{ env.IMAGE_TAG }}"
 
-          # Tag ulang sebagai latest
+          # Tag sebagai latest
           docker tag ${{ secrets.DOCKER_USERNAME }}/${{ env.MODEL_NAME }}:${{ env.IMAGE_TAG }} \
                      ${{ secrets.DOCKER_USERNAME }}/${{ env.MODEL_NAME }}:latest
 
-          # Push kedua tag
-          docker push ${{ secrets.DOCKER_USERNAME }}/${{ env.MODEL_NAME }}:${{ env.IMAGE_TAG }}
+          # Push keduanya
+          docker push ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_TAG }}/${{ env.MODEL_NAME }}:${{ env.IMAGE_TAG }}
           docker push ${{ secrets.DOCKER_USERNAME }}/${{ env.MODEL_NAME }}:latest
 
-          echo "Docker image berhasil di-push!"
+          echo "Docker image berhasil di-build dan di-push!"
           echo "Link: https://hub.docker.com/r/${{ secrets.DOCKER_USERNAME }}/${{ env.MODEL_NAME }}"
-
       - name: Summary
         run: |
           echo "========================================"
