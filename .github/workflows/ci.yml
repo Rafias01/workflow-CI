@@ -25,11 +25,17 @@ jobs:
           miniconda-version: "latest"
           auto-activate-base: false
 
+      - name: Install dependencies (termasuk mlflow)
+        shell: bash -l {0}
+        run: |
+          pip install --upgrade pip
+          pip install mlflow[extras] scikit-learn pandas joblib cloudpickle
+
       - name: Train model menggunakan MLflow Projects
         working-directory: MLProject
-        shell: bash -l {0}  # login shell agar conda init jalan
+        shell: bash -l {0}
         run: |
-          mlflow run .
+          mlflow run . --env-manager=local
           
           echo "Pelatihan selesai!"
           echo "Folder mlruns telah dibuat di: $(pwd)/mlruns"
@@ -52,9 +58,10 @@ jobs:
         run: |
           echo "========================================"
           echo "PIPELINE CI BERHASIL SELESAI!"
-          echo "✓ Model dilatih menggunakan 'mlflow run .' (full MLflow Projects)"
-          echo "✓ Dependencies otomatis dari conda.yaml (termasuk mlflow[extras])"
-          echo "✓ Reproducible 100% dengan Conda env"
+          echo "✓ Model dilatih menggunakan 'mlflow run --env-manager=local'"
+          echo "✓ Ada conda.yaml untuk reproducibility"
+          echo "✓ Dependencies di-install di environment CI"
+          echo "✓ Metrics, parameters, & model artifact di-log ke MLflow"
           echo "✓ Folder mlruns telah di-update dan di-commit ke repo"
           echo "   → Lihat di: https://github.com/Rafias01/workflow-CI/tree/main/MLProject/mlruns"
           echo "========================================"
