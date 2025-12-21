@@ -1,12 +1,12 @@
 name: Bank Churn - CI Training & Docker Deployment
 
 permissions:
-  contents: write
+  contents: write  
 
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:  
+  workflow_dispatch:
 
 jobs:
   train-and-deploy:
@@ -20,7 +20,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history (ubah ke 1 jika ingin lebih cepat)
+          fetch-depth: 
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -37,18 +37,27 @@ jobs:
         run: |
           python modelling.py
           echo "Pelatihan selesai"
+          echo "Folder mlruns telah dibuat secara otomatis oleh MLflow"
+          echo "File logreg_model.pkl juga telah dibuat"
 
-      # Optional: Hapus atau ganti dengan remote tracking (hindari repo bloat)
-      - name: Simpan MLflow tracking (opsional - hati-hati repo membengkak)
+      - name: Simpan artifact MLflow (mlruns) + logreg_model.pkl ke repository
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "actions@github.com"
-          git add MLProject/mlruns || echo "Tidak ada mlruns baru"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Pull dulu perubahan terbaru agar aman dari konflik
+          git pull origin main --rebase
+
+          # Tambahkan folder mlruns dan file logreg_model.pkl
+          git add MLProject/mlruns MLProject/logreg_model.pkl || echo "Tidak ada perubahan artifact"
+
+          # Commit hanya jika ada perubahan
           if git diff-index --quiet HEAD --; then
-            echo "Tidak ada perubahan untuk di-commit"
+            echo "Tidak ada perubahan artifact untuk di-commit"
           else
-            git commit -m "ci: update MLflow tracking ($(date +'%Y-%m-%d %H:%M'))"
+            git commit -m "ci: update MLflow artifacts (mlruns + logreg_model.pkl) - $(date +'%Y-%m-%d %H:%M:%S')"
             git push origin main
+            echo "Artifact berhasil disimpan ke repository!"
           fi
 
       - name: Login to Docker Hub
@@ -60,23 +69,37 @@ jobs:
       - name: Build & push Docker image
         working-directory: MLProject
         run: |
-          [ -d "model" ] && [ -f "model/MLmodel" ] || { echo "Artifact model tidak ditemukan!"; exit 1; }
-          
-          # Build dengan tag SHA + latest
+          # Validasi artifact model dari MLflow
+          if [ ! -d "model" ] || [ ! -f "model/MLmodel" ]; then
+            echo "Error: Folder model/ atau MLmodel tidak ditemukan!"
+            exit 1
+          fi
+
+          echo "Membangun Docker image dengan tag ${{ env.IMAGE_TAG }} dan latest..."
+
+          # Build image dengan tag SHA
           mlflow models build-docker \
             --model-uri "./model" \
             --name "${{ secrets.DOCKER_USERNAME }}/${{ env.MODEL_NAME }}:${{ env.IMAGE_TAG }}"
-          
+
+          # Tag ulang sebagai latest
           docker tag ${{ secrets.DOCKER_USERNAME }}/${{ env.MODEL_NAME }}:${{ env.IMAGE_TAG }} \
                      ${{ secrets.DOCKER_USERNAME }}/${{ env.MODEL_NAME }}:latest
-          
+
+          # Push kedua tag
           docker push ${{ secrets.DOCKER_USERNAME }}/${{ env.MODEL_NAME }}:${{ env.IMAGE_TAG }}
           docker push ${{ secrets.DOCKER_USERNAME }}/${{ env.MODEL_NAME }}:latest
-          
-          echo "Image berhasil: https://hub.docker.com/r/${{ secrets.DOCKER_USERNAME }}/${{ env.MODEL_NAME }}"
+
+          echo "Docker image berhasil di-push!"
+          echo "Link: https://hub.docker.com/r/${{ secrets.DOCKER_USERNAME }}/${{ env.MODEL_NAME }}"
 
       - name: Summary
         run: |
-          echo "Pipeline CI/CD selesai!"
-          echo "Model telah dilatih dan di-log"
-          echo "Docker image telah di-push ke Docker Hub"
+          echo "========================================"
+          echo "Pipeline CI/CD BERHASIL SELESAI!"
+          echo "✓ Model dilatih ulang"
+          echo "✓ Metrics & model di-log ke MLflow"
+          echo "✓ Folder mlruns (termasuk artifacts/model/model.pkl) disimpan ke repo"
+          echo "✓ File logreg_model.pkl disimpan ke repo"
+          echo "✓ Docker image di-build & di-push ke Docker Hub (tag: ${{ env.IMAGE_TAG }} & latest)"
+          echo "========================================"
