@@ -23,7 +23,6 @@ jobs:
         with:
           python-version: "3.9"
           miniconda-version: "latest"
-          activate-environment: mlflow-env
           auto-activate-base: false
 
       - name: Train model menggunakan MLflow Projects (otomatis pakai conda.yaml)
@@ -53,7 +52,8 @@ jobs:
         run: |
           echo "========================================"
           echo "PIPELINE CI BERHASIL SELESAI!"
-          echo "✓ Model dilatih menggunakan 'mlflow run' (otomatis pakai conda.yaml)"
+          echo "✓ Model dilatih menggunakan 'mlflow run' dengan conda.yaml"
+          echo "✓ Dependencies otomatis dari conda.yaml (reproducible)"
           echo "✓ Metrics, parameters, & model artifact di-log ke MLflow"
           echo "✓ Folder mlruns telah di-update dan di-commit ke repo"
           echo "   → Lihat di: https://github.com/Rafias01/workflow-CI/tree/main/MLProject/mlruns"
