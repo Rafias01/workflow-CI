@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PYTHON_VERSION: "3.9"
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -32,8 +33,8 @@ jobs:
       - name: Train model menggunakan MLflow Projects
         working-directory: MLProject
         run: |
-          # Gunakan mlflow run dengan --no-conda agar tidak error di GitHub Actions
-          mlflow run . --no-conda
+          # Gunakan env-manager=local untuk jalankan di environment saat ini (tanpa Conda)
+          mlflow run . --env-manager=local
           
           echo "Pelatihan selesai!"
           echo "Folder mlruns telah dibuat di: $(pwd)/mlruns"
@@ -41,7 +42,7 @@ jobs:
       - name: Commit dan push folder mlruns ke repo
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898242+github-actions[bot]@users.noreply.github.com"
 
           # Ambil update terbaru dari remote untuk hindari konflik
           git pull origin main --rebase
