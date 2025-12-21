@@ -7,10 +7,10 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score
 import joblib  
 
-mlflow.set_experiment("Bank Churn - CI Workflow")
+# HAPUS mlflow.set_experiment() dari sini!
+# Biarkan MLflow Projects yang handle experiment & run
 
 print("MLflow tracking lokal aktif (default: ./mlruns)")
-print("Experiment: Bank Churn - CI Workflow")
 print("Training dimulai..\n")
 
 DATA_PATH = "bank_dataset_preprocessing.csv"
@@ -27,7 +27,8 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42, stratify=y
 )
 
-model = LogisticRegression(max_iter=1000)
+
+model = LogisticRegression(max_iter=2000)  
 model.fit(X_train, y_train)
 
 y_pred = model.predict(X_test)
@@ -35,12 +36,13 @@ y_pred = model.predict(X_test)
 acc = accuracy_score(y_test, y_pred)
 f1 = f1_score(y_test, y_pred)
 
+mlflow.log_param("model_type", "LogisticRegression")
+mlflow.log_param("max_iter", 2000)
+mlflow.log_param("test_size", 0.2)
+mlflow.log_param("random_state", 42)
+
 mlflow.log_metric("test_accuracy", acc)
 mlflow.log_metric("test_f1_score", f1)
-
-mlflow.log_param("model_type", "LogisticRegression")
-mlflow.log_param("max_iter", 1000)
-mlflow.log_param("random_state", 42)
 
 print("Logging model dengan cara resmi MLflow...")
 mlflow.sklearn.log_model(
@@ -50,8 +52,8 @@ mlflow.sklearn.log_model(
 
 pkl_path = "logreg_model.pkl"
 joblib.dump(model, pkl_path)
-mlflow.log_artifact(pkl_path, artifact_path="model")  
-print(f"logreg_model.pkl berhasil dibuat dan di-log ke MLflow")
+mlflow.log_artifact(pkl_path, artifact_path="model")
+os.remove(pkl_path)  
 
 print("\nMODEL BERHASIL DI-LOG KE MLFLOW!")
 print(f"Test Accuracy : {acc:.4f}")
