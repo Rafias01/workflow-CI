@@ -1,7 +1,7 @@
-name: Bank Churn - CI Training & Docker Deployment
+name: Bank Churn - CI Training Only
 
 permissions:
-  contents: write  
+  contents: read  # Tidak perlu write karena tidak commit apa-apa
 
 on:
   push:
@@ -9,25 +9,21 @@ on:
   workflow_dispatch:
 
 jobs:
-  train-and-deploy:
+  train-model:
     runs-on: ubuntu-latest
     env:
       PYTHON_VERSION: "3.9"
-      MODEL_NAME: "bank-churn-logreg"
-      IMAGE_TAG: ${{ github.sha }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 
 
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install required packages
+      - name: Install dependencies
         run: |
           pip install --upgrade pip
           pip install mlflow[extras] scikit-learn pandas joblib cloudpickle
@@ -36,78 +32,29 @@ jobs:
         working-directory: MLProject
         run: |
           python modelling.py
-          echo "Pelatihan selesai"
-          echo "Folder mlruns telah dibuat secara otomatis oleh MLflow"
-          echo "File logreg_model.pkl juga telah dibuat"
+          echo "Pelatihan selesai!"
+          echo "Folder mlruns telah dibuat secara otomatis oleh MLflow di: $(pwd)/mlruns"
 
-      - name: Simpan artifact MLflow (mlruns) + logreg_model.pkl ke repository
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          # Pull dulu perubahan terbaru agar aman dari konflik
-          git pull origin main --rebase
-
-          # Tambahkan folder mlruns dan file logreg_model.pkl
-          git add MLProject/mlruns MLProject/logreg_model.pkl || echo "Tidak ada perubahan artifact"
-
-          # Commit hanya jika ada perubahan
-          if git diff-index --quiet HEAD --; then
-            echo "Tidak ada perubahan artifact untuk di-commit"
-          else
-            git commit -m "ci: update MLflow artifacts (mlruns + logreg_model.pkl) - $(date +'%Y-%m-%d %H:%M:%S')"
-            git push origin main
-            echo "Artifact berhasil disimpan ke repository!"
-          fi
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
+      - name: Upload folder mlruns sebagai Artifact
+        uses: actions/upload-artifact@v4
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          name: mlruns-full-tracking-${{ github.run_number }}
+          path: MLProject/mlruns/
+          retention-days: 90
+          if-no-files-found: error  # Pastikan folder ada
 
-      - name: Build & push Docker image
-        working-directory: MLProject
-        run: |
-          echo "Mencari run MLflow terbaru untuk experiment 'Bank Churn - CI Workflow'..."
-
-          # Dapatkan run_id terbaru dari experiment
-          LATEST_RUN_ID=$(mlflow runs list \
-            --experiment-name "Bank Churn - CI Workflow" \
-            --order-by "start_time DESC" \
-            --max-results 1 \
-            --output-format json | jq -r '.[0].run_id')
-
-          if [ -z "$LATEST_RUN_ID" ]; then
-            echo "Error: Tidak ada run MLflow yang ditemukan!"
-            exit 1
-          fi
-
-          echo "Run terbaru ditemukan: $LATEST_RUN_ID"
-          echo "Membangun Docker image dari run tersebut..."
-
-          # Build Docker langsung dari run MLflow (tanpa perlu folder model sementara)
-          mlflow models build-docker \
-            --model-uri "runs:/$LATEST_RUN_ID/model" \
-            --name "${{ secrets.DOCKER_USERNAME }}/${{ env.MODEL_NAME }}:${{ env.IMAGE_TAG }}"
-
-          # Tag sebagai latest
-          docker tag ${{ secrets.DOCKER_USERNAME }}/${{ env.MODEL_NAME }}:${{ env.IMAGE_TAG }} \
-                     ${{ secrets.DOCKER_USERNAME }}/${{ env.MODEL_NAME }}:latest
-
-          # Push keduanya
-          docker push ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_TAG }}/${{ env.MODEL_NAME }}:${{ env.IMAGE_TAG }}
-          docker push ${{ secrets.DOCKER_USERNAME }}/${{ env.MODEL_NAME }}:latest
-
-          echo "Docker image berhasil di-build dan di-push!"
-          echo "Link: https://hub.docker.com/r/${{ secrets.DOCKER_USERNAME }}/${{ env.MODEL_NAME }}"
       - name: Summary
         run: |
           echo "========================================"
-          echo "Pipeline CI/CD BERHASIL SELESAI!"
-          echo "✓ Model dilatih ulang"
-          echo "✓ Metrics & model di-log ke MLflow"
-          echo "✓ Folder mlruns (termasuk artifacts/model/model.pkl) disimpan ke repo"
-          echo "✓ File logreg_model.pkl disimpan ke repo"
-          echo "✓ Docker image di-build & di-push ke Docker Hub (tag: ${{ env.IMAGE_TAG }} & latest)"
+          echo "PIPELINE CI BERHASIL SELESAI!"
+          echo "✓ Model berhasil dilatih"
+          echo "✓ Semua metrics, params, dan model di-log ke MLflow"
+          echo "✓ Folder mlruns lengkap telah di-upload sebagai Artifact"
+          echo ""
+          echo "Cara melihat hasil:"
+          echo "1. Buka GitHub → Actions → Run terbaru ini"
+          echo "2. Download artifact: mlruns-full-tracking-*"
+          echo "3. Extract folder mlruns"
+          echo "4. Jalankan perintah: mlflow ui --backend-store-uri mlruns"
+          echo "5. Buka browser: http://localhost:5000"
           echo "========================================"
