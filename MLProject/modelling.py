@@ -40,16 +40,12 @@ with mlflow.start_run(run_name="Logistic Regression - Baseline CI"):
     mlflow.log_metric("test_accuracy", acc)
     mlflow.log_metric("test_f1_score", f1)
 
-
-    print("Logging model dengan cara terbaru MLflow...")
+    print("Logging model dengan cara resmi MLflow...")
     mlflow.sklearn.log_model(
         sk_model=model,
-        artifact_path="model"  
+        artifact_path="model"
     )
 
-    mlflow.log_artifacts(".", artifact_path="model")  
-
     print("\nMODEL BERHASIL DI-LOG KE MLFLOW!")
-    print("Folder artifacts/model DIPAKSA tercipta dengan semua file")
     print(f"Test Accuracy : {acc:.4f}")
     print(f"Test F1-Score : {f1:.4f}")
